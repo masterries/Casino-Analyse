@@ -1,11 +1,13 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { GameDataContext } from '../App';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import RTPWagerCalculator from './RTPWagerCalculator';
 
 const GameDetails: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const games = useContext(GameDataContext);
+  const [showCalculator, setShowCalculator] = useState<boolean>(false);
 
   const game = games.find(g => g.slug === slug);
 
@@ -33,7 +35,7 @@ const GameDetails: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-4 mb-6">
             {/* RTP Card */}
-            <Card className="bg-gray-800 text-white">
+            <Card className="bg-gray-800 text-white cursor-pointer" onClick={() => setShowCalculator(true)}>
               <CardHeader>
                 <CardTitle>RTP (Return to Player)</CardTitle>
               </CardHeader>
@@ -113,6 +115,13 @@ const GameDetails: React.FC = () => {
           </Card>
         </div>
       </div>
+
+      {showCalculator && (
+        <RTPWagerCalculator
+          rtp={game.attributes.rtp ?? 0}
+          onClose={() => setShowCalculator(false)}
+        />
+      )}
     </div>
   );
 };

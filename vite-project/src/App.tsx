@@ -5,6 +5,7 @@ import LandingPage from './components/LandingPage';
 import GamesDashboard from './components/GamesDashboard';
 import ProviderDetails from './components/ProviderDetails';
 import GameDetails from './components/GameDetails';
+import GameList from './components/GameList';
 
 interface Game {
   slug: string;
@@ -90,6 +91,7 @@ const App: React.FC = () => {
               <Route path="/dashboard" element={<GamesDashboard />} />
               <Route path="/provider/:name" element={<ProviderDetails />} />
               <Route path="/game/:slug" element={<GameDetails />} />
+              <Route path ="gamelist" element={<GameList />} />
               {/* Add more routes for categories and other pages */}
             </Routes>
           </main>

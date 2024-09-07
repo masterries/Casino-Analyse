@@ -32,6 +32,7 @@ const NavMenu: React.FC = () => {
             <div className="ml-10 flex items-baseline space-x-4">
               <Link to="/dashboard" className={linkStyle}>Dashboard</Link>
               <Link to="/categories" className={linkStyle}>Categories</Link>
+              <Link to="/Gamelist" className={linkStyle}>Full Game List</Link>
               <div 
                 className="relative group"
                 onMouseEnter={() => handleMouseEnter('categories')}
