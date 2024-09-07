@@ -6,6 +6,7 @@ import GamesDashboard from './components/GamesDashboard';
 import ProviderDetails from './components/ProviderDetails';
 import GameDetails from './components/GameDetails';
 import GameList from './components/GameList';
+import BonusCalculator from './components/BonusCalculator';
 
 interface Game {
   slug: string;
@@ -92,6 +93,7 @@ const App: React.FC = () => {
               <Route path="/provider/:name" element={<ProviderDetails />} />
               <Route path="/game/:slug" element={<GameDetails />} />
               <Route path ="gamelist" element={<GameList />} />
+              <Route path ="bonuscalculator" element={<BonusCalculator />} />
               {/* Add more routes for categories and other pages */}
             </Routes>
           </main>
