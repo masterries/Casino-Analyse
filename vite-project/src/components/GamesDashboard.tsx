@@ -1,26 +1,87 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
-interface Game {
+export interface Game {
+  slug: string;
   name: string;
-  provider: { name: string };
-  category: { name: string };
-  attributes: {
-    rtp: number | null;
-    volatility: string | null;
+  externalId: string | null;
+  provider: {
+    slug: string;
+    name: string;
+    order: number;
+    visibility: number;
+    isNew: boolean;
+    thumbnail: string;
   };
-  tags: { name: string }[];
+  category: {
+    slug: string;
+    name: string;
+    visibility: number;
+  };
+  hasDemo: boolean | null;
+  isWageringBonusAllowed: boolean;
+  isAvailableInCountry: boolean;
+  thumbnail: string;
+  isEnabled: boolean;
+  isFavorite: boolean;
+  isNew: boolean;
+  isSystem: boolean;
+  attributes: {
+    hasJackpot: boolean | null;
+    isHd: boolean | null;
+    volatility: string | null;
+    devices: string[] | null;
+    hasFreespins: boolean | null;
+    rtp: number | null;
+    lines: number | null;
+    multiplier: number | null;
+    isNew: boolean;
+    isSystem: boolean;
+    customUrl: string | null;
+    type: string | null;
+  };
+  tags: Array<{
+    slug: string;
+    name: string;
+    order: number;
+    image: string | null;
+  }>;
 }
 
 const GamesDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [games, setGames] = useState<Game[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/data/gamesData.json')
-      .then(response => response.json())
-      .then(data => setGames(data));
+    fetch('https://raw.githubusercontent.com/masterries/Casino-Analyse/main/data/gamesData.json')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        setGames(data);
+        setIsLoading(false);
+      })
+      .catch(error => {
+        console.error('Error fetching game data:', error);
+        setError('Failed to load game data. Please try again later.');
+        setIsLoading(false);
+      });
   }, []);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
 
   const providerData = Object.entries(
     games.reduce((acc, game) => {
@@ -50,52 +111,56 @@ const GamesDashboard: React.FC = () => {
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
+  const handleProviderClick = (data: any) => {
+    navigate(`/provider/${encodeURIComponent(data.name)}`);
+  };
+
   return (
-    <div className="p-4">
-      <h1 className="text-3xl font-bold mb-4">Games Analytics Dashboard</h1>
+    <div className="p-4 bg-gray-900 text-white min-h-screen">
+      <h1 className="text-4xl font-bold mb-6">Games Analytics Dashboard</h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="bg-gray-800 text-white">
           <CardHeader>
-            <CardTitle>Total Games</CardTitle>
+            <CardTitle className="text-2xl">Total Games</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-4xl font-bold">{games.length}</p>
+            <p className="text-5xl font-bold">{games.length}</p>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-gray-800 text-white">
           <CardHeader>
-            <CardTitle>Average RTP</CardTitle>
+            <CardTitle className="text-2xl">Average RTP</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-4xl font-bold">{avgRTP.toFixed(2)}%</p>
+            <p className="text-5xl font-bold">{avgRTP.toFixed(2)}%</p>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-gray-800 text-white col-span-1 lg:col-span-2">
           <CardHeader>
-            <CardTitle>Top Providers</CardTitle>
+            <CardTitle className="text-2xl">Top Providers</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
+          <CardContent className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
               <BarChart data={providerData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="value" fill="#8884d8" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#555" />
+                <XAxis dataKey="name" stroke="#fff" />
+                <YAxis stroke="#fff" />
+                <Tooltip contentStyle={{ backgroundColor: '#333', color: '#fff' }} />
+                <Bar dataKey="value" fill="#8884d8" onClick={handleProviderClick} cursor="pointer" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-gray-800 text-white">
           <CardHeader>
-            <CardTitle>Game Categories</CardTitle>
+            <CardTitle className="text-2xl">Game Categories</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
+          <CardContent className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={categoryData}
@@ -106,25 +171,25 @@ const GamesDashboard: React.FC = () => {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {categoryData.map((entry, index) => (
+                  {categoryData.map((_entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip contentStyle={{ backgroundColor: '#333', color: '#fff' }} />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-gray-800 text-white">
           <CardHeader>
-            <CardTitle>Volatility Distribution</CardTitle>
+            <CardTitle className="text-2xl">Volatility Distribution</CardTitle>
           </CardHeader>
           <CardContent>
             {Object.entries(volatilityCounts).map(([volatility, count]) => (
               <div key={volatility} className="flex justify-between items-center mb-2">
-                <span className="capitalize">{volatility}</span>
-                <span className="font-bold">{count}</span>
+                <span className="capitalize text-lg">{volatility}</span>
+                <span className="font-bold text-lg">{count}</span>
               </div>
             ))}
           </CardContent>
