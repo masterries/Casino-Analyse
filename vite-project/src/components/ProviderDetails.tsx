@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { GameDataContext, FilterContext } from '../App';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,7 +24,9 @@ const ProviderDetails: React.FC = () => {
   const allTags = Array.from(new Set(providerGames.flatMap(game => game.tags.map(tag => tag.name))));
   const features = ['hasJackpot', 'isHd', 'hasFreespins', 'isWageringBonusAllowed'];
 
-  const avgRTP = filteredGames.reduce((sum, game) => sum + (game.attributes.rtp || 0), 0) / filteredGames.length;
+  const avgRTP = filteredGames.length > 0
+    ? filteredGames.reduce((sum, game) => sum + (game.attributes.rtp || 0), 0) / filteredGames.length
+    : 0;
 
   return (
     <div className="p-4 bg-gray-900 text-white min-h-screen">
@@ -37,7 +39,7 @@ const ProviderDetails: React.FC = () => {
             <CardTitle className="text-2xl">Total Games</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-5xl font-bold">{providerGames.length}</p>
+            <p className="text-5xl font-bold">{filteredGames.length}</p>
           </CardContent>
         </Card>
         
@@ -58,16 +60,17 @@ const ProviderDetails: React.FC = () => {
         features={features}
         selectedFeatures={filterState.selectedFeatures || []}
         setSelectedFeatures={(features) => setFilterState({...filterState, selectedFeatures: features})}
+        sortOption={filterState.sortOption || 'default'}
         setSortOption={(option) => setFilterState({...filterState, sortOption: option})}
       />
 
       <Card className="bg-gray-800 text-white mt-6">
         <CardHeader>
-          <CardTitle className="text-2xl">Games List</CardTitle>
+          <CardTitle className="text-2xl">Games List ({filteredGames.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {providerGames.map(game => (
+            {filteredGames.map(game => (
               <Link 
                 key={game.slug} 
                 to={`/game/${game.slug}`} 

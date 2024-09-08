@@ -155,3 +155,26 @@ button:focus-visible {
     @apply bg-background text-foreground;
   }
 }
+
+
+.draggable-calculator {
+  position: absolute;
+  z-index: 1000;
+  background-color: #1f2937;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  width: 100px;
+}
+
+.close-button {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.calculator-content {
+  color: white;
+}
