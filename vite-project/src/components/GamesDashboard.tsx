@@ -100,7 +100,9 @@ const GamesDashboard: React.FC = () => {
     }, {} as Record<string, number>)
   ).map(([name, value]) => ({ name, value }));
 
-  const avgRTP = games.reduce((sum, game) => sum + (game.attributes.rtp || 0), 0) / games.length;
+  // Filter out games with an RTP of 0 or null and calculate the average RTP
+  const gamesWithValidRTP = games.filter(game => game.attributes.rtp && game.attributes.rtp > 0);
+  const avgRTP = gamesWithValidRTP.reduce((sum, game) => sum + (game.attributes.rtp || 0), 0) / gamesWithValidRTP.length;
 
   const volatilityCounts = games.reduce((acc, game) => {
     if (game.attributes.volatility) {

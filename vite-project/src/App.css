@@ -1,12 +1,9 @@
-html, body, #root {
-  width: 100%;
-  min-height: 100vh;
+html, body {
   margin: 0;
   padding: 0;
-}
-
-body {
-  min-width: 100vw;
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;  /* This hides any horizontal overflow */
 }
 
 .logo {
