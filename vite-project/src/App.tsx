@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createContext } from 'react';
+import React, { useState, useEffect, createContext, useCallback } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import NavMenu from './components/NavMenu';
 import LandingPage from './components/LandingPage';
@@ -8,6 +8,7 @@ import GameDetails from './components/GameDetails';
 import GameList from './components/GameList';
 import BonusCalculator from './components/BonusCalculator';
 import PotDataVisualization from './components/PotDataVisualization';
+import ErrorBoundary from './components/ErrorBoundary';  // You'll need to create this component
 
 interface Game {
   slug: string;
@@ -57,10 +58,34 @@ interface Game {
 }
 
 export const GameDataContext = createContext<Game[]>([]);
+export const FilterContext = createContext<{
+  filterState: {
+    selectedTags: string[];
+    selectedFeatures: string[];
+    sortOption: string;
+  };
+  setFilterState: React.Dispatch<React.SetStateAction<{
+    selectedTags: string[];
+    selectedFeatures: string[];
+    sortOption: string;
+  }>>;
+}>({
+  filterState: {
+    selectedTags: [],
+    selectedFeatures: [],
+    sortOption: ''
+  },
+  setFilterState: () => {}
+});
 
 const App: React.FC = () => {
   const [games, setGames] = useState<Game[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [filterState, setFilterState] = useState({
+    selectedTags: [],
+    selectedFeatures: [],
+    sortOption: ''
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -78,6 +103,13 @@ const App: React.FC = () => {
     fetchData();
   }, []);
 
+  const memoizedSetFilterState = useCallback((newState) => {
+    setFilterState(prevState => ({
+      ...prevState,
+      ...(typeof newState === 'function' ? newState(prevState) : newState)
+    }));
+  }, []);
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -85,21 +117,24 @@ const App: React.FC = () => {
   return (
     <Router basename="/Casino-Analyse">
       <GameDataContext.Provider value={games}>
-        <div className="flex flex-col min-h-screen bg-gray-900">
-          <NavMenu />
-          <main className="flex-grow">
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/dashboard" element={<GamesDashboard />} />
-              <Route path="/provider/:name" element={<ProviderDetails />} />
-              <Route path="/game/:slug" element={<GameDetails />} />
-              <Route path ="gamelist" element={<GameList />} />
-              <Route path ="bonuscalculator" element={<BonusCalculator />} />
-              <Route path ="potdatavisualization" element={<PotDataVisualization />} />
-              {/* Add more routes for categories and other pages */}
-            </Routes>
-          </main>
-        </div>
+        <FilterContext.Provider value={{ filterState, setFilterState: memoizedSetFilterState }}>
+          <div className="flex flex-col min-h-screen bg-gray-900">
+            <NavMenu />
+            <main className="flex-grow">
+              <ErrorBoundary>
+                <Routes>
+                  <Route path="/" element={<LandingPage />} />
+                  <Route path="/dashboard" element={<GamesDashboard />} />
+                  <Route path="/provider/:name" element={<ProviderDetails />} />
+                  <Route path="/game/:slug" element={<GameDetails />} />
+                  <Route path="gamelist" element={<GameList />} />
+                  <Route path="bonuscalculator" element={<BonusCalculator />} />
+                  <Route path="potdatavisualization" element={<PotDataVisualization />} />
+                </Routes>
+              </ErrorBoundary>
+            </main>
+          </div>
+        </FilterContext.Provider>
       </GameDataContext.Provider>
     </Router>
   );

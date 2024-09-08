@@ -1,19 +1,34 @@
-import React, { useContext } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { GameDataContext } from '../App';
+import React, { useContext, useState, useEffect } from 'react';
+import { useParams, Link, useLocation } from 'react-router-dom';
+import { GameDataContext, FilterContext } from '../App';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import GameFilters from './GameFilters';
+import { useGameFilters } from '../hooks/useGameFilters';
 
 const ProviderDetails: React.FC = () => {
   const { name } = useParams<{ name: string }>();
+  const location = useLocation();
   const games = useContext(GameDataContext);
+  const { filterState, setFilterState } = useContext(FilterContext);
 
   const providerGames = games.filter(game => game.provider.name === name);
+  const filteredGames = useGameFilters(providerGames);
 
-  const avgRTP = providerGames.reduce((sum, game) => sum + (game.attributes.rtp || 0), 0) / providerGames.length;
+  // Initialize with the filter state from the dashboard if available
+  useEffect(() => {
+    if (location.state && location.state.filterState) {
+      setFilterState(location.state.filterState);
+    }
+  }, [location.state, setFilterState]);
+
+  const allTags = Array.from(new Set(providerGames.flatMap(game => game.tags.map(tag => tag.name))));
+  const features = ['hasJackpot', 'isHd', 'hasFreespins', 'isWageringBonusAllowed'];
+
+  const avgRTP = filteredGames.reduce((sum, game) => sum + (game.attributes.rtp || 0), 0) / filteredGames.length;
 
   return (
     <div className="p-4 bg-gray-900 text-white min-h-screen">
-      <Link to="/" className="text-blue-400 hover:text-blue-300 mb-4 inline-block">&larr; Back to Dashboard</Link>
+      <Link to="/dashboard" className="text-blue-400 hover:text-blue-300 mb-4 inline-block">&larr; Back to Dashboard</Link>
       <h1 className="text-4xl font-bold mb-6">{name} Provider Details</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -36,7 +51,17 @@ const ProviderDetails: React.FC = () => {
         </Card>
       </div>
 
-      <Card className="bg-gray-800 text-white">
+      <GameFilters 
+        allTags={allTags}
+        selectedTags={filterState.selectedTags || []}
+        setSelectedTags={(tags) => setFilterState({...filterState, selectedTags: tags})}
+        features={features}
+        selectedFeatures={filterState.selectedFeatures || []}
+        setSelectedFeatures={(features) => setFilterState({...filterState, selectedFeatures: features})}
+        setSortOption={(option) => setFilterState({...filterState, sortOption: option})}
+      />
+
+      <Card className="bg-gray-800 text-white mt-6">
         <CardHeader>
           <CardTitle className="text-2xl">Games List</CardTitle>
         </CardHeader>

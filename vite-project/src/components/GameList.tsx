@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom'; // Import Link from react-router-dom
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import GameFilters from './GameFilters'; // Make sure the path is correct
 
 export interface Game {
   slug: string;
@@ -23,8 +24,10 @@ const GamesDashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
+  const [sortOption, setSortOption] = useState<string>('');
   const [visibleGames, setVisibleGames] = useState<Game[]>([]);
-  const [visibleCount, setVisibleCount] = useState<number>(9); // Initially load 9 games
+  const [visibleCount, setVisibleCount] = useState<number>(9);
+  const dashboardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch('https://raw.githubusercontent.com/masterries/Casino-Analyse/main/data/gamesData.json')
@@ -46,13 +49,37 @@ const GamesDashboard: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    setVisibleGames(games.slice(0, visibleCount)); // Update the visible games based on scroll
-  }, [games, visibleCount]);
+    let filteredGames = games.filter(game => {
+      const tagMatch = selectedTags.length === 0 || game.tags.some(tag => selectedTags.includes(tag.name));
+      const featureMatch = selectedFeatures.length === 0 || selectedFeatures.every(feature => {
+        if (feature === 'isWageringBonusAllowed') return game.isWageringBonusAllowed;
+        return game.attributes[feature as keyof typeof game.attributes] === true;
+      });
+      return tagMatch && featureMatch;
+    });
 
-  // Infinite scroll logic
+    // Apply sorting
+    if (sortOption) {
+      filteredGames.sort((a, b) => {
+        switch (sortOption) {
+          case 'rtp':
+            return (b.attributes.rtp || 0) - (a.attributes.rtp || 0);
+          case 'name':
+            return a.name.localeCompare(b.name);
+          case 'provider':
+            return a.provider.name.localeCompare(b.provider.name);
+          default:
+            return 0;
+        }
+      });
+    }
+
+    setVisibleGames(filteredGames.slice(0, visibleCount));
+  }, [games, selectedTags, selectedFeatures, sortOption, visibleCount]);
+
   const loadMoreGames = useCallback(() => {
     if (window.innerHeight + document.documentElement.scrollTop + 1 >= document.documentElement.scrollHeight) {
-      setVisibleCount(prevCount => prevCount + 9); // Load 9 more games
+      setVisibleCount(prevCount => prevCount + 9);
     }
   }, []);
 
@@ -60,6 +87,13 @@ const GamesDashboard: React.FC = () => {
     window.addEventListener('scroll', loadMoreGames);
     return () => window.removeEventListener('scroll', loadMoreGames);
   }, [loadMoreGames]);
+
+  useEffect(() => {
+    if (dashboardRef.current) {
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      dashboardRef.current.style.paddingRight = `${scrollbarWidth}px`;
+    }
+  }, []);
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -69,74 +103,45 @@ const GamesDashboard: React.FC = () => {
     return <div>Error: {error}</div>;
   }
 
-  // Unique tags and features for filtering
   const allTags = Array.from(new Set(games.flatMap(game => game.tags.map(tag => tag.name))));
   const features = ['hasJackpot', 'isHd', 'hasFreespins', 'isWageringBonusAllowed'];
 
-  // Filtered games
-
-  const handleTagChange = (tag: string) => {
-    setSelectedTags(prev => (prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]));
-  };
-
-  const handleFeatureChange = (feature: string) => {
-    setSelectedFeatures(prev => (prev.includes(feature) ? prev.filter(f => f !== feature) : [...prev, feature]));
-  };
-
   return (
-    <div className="p-4 bg-gray-900 text-white min-h-screen">
-      <h1 className="text-4xl font-bold mb-6">Games Analytics Dashboard</h1>
+    <div ref={dashboardRef} className="bg-gray-900 text-white min-h-screen overflow-y-scroll">
+      <div className="p-4">
+        <h1 className="text-4xl font-bold mb-6">Full Game List</h1>
 
-      {/* Filters */}
-      <div className="mb-4">
-        <h2 className="text-2xl font-semibold">Filter by Tags</h2>
-        <div className="flex flex-wrap gap-2">
-          {allTags.map(tag => (
-            <button
-              key={tag}
-              onClick={() => handleTagChange(tag)}
-              className={`px-3 py-1 rounded-full ${selectedTags.includes(tag) ? 'bg-blue-600' : 'bg-gray-700'} text-sm`}
-            >
-              {tag}
-            </button>
-          ))}
+        <GameFilters 
+          allTags={allTags}
+          selectedTags={selectedTags}
+          setSelectedTags={setSelectedTags}
+          features={features}
+          selectedFeatures={selectedFeatures}
+          setSelectedFeatures={setSelectedFeatures}
+          setSortOption={setSortOption}
+        />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {visibleGames.length > 0 ? (
+            visibleGames.map(game => (
+              <Link key={game.slug} to={`/game/${game.slug}`} className="block">
+                <Card className="bg-gray-800 text-white">
+                  <CardHeader>
+                    <CardTitle className="text-xl">{game.name}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <img src={game.provider.thumbnail} alt={game.name} className="mb-2 rounded" />
+                    <p className="text-sm">Provider: {game.provider.name}</p>
+                    <p className="text-sm">Category: {game.category.name}</p>
+                    <p className="text-sm">RTP: {game.attributes.rtp || 'N/A'}%</p>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))
+          ) : (
+            <div>No games match the selected filters.</div>
+          )}
         </div>
-
-        <h2 className="text-2xl font-semibold mt-4">Filter by Features</h2>
-        <div className="flex flex-wrap gap-2">
-          {features.map(feature => (
-            <button
-              key={feature}
-              onClick={() => handleFeatureChange(feature)}
-              className={`px-3 py-1 rounded-full ${selectedFeatures.includes(feature) ? 'bg-blue-600' : 'bg-gray-700'} text-sm`}
-            >
-              {feature}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Filtered Games List with Infinite Scroll and Linking */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {visibleGames.length > 0 ? (
-          visibleGames.map(game => (
-            <Link key={game.slug} to={`/game/${game.slug}`} className="block"> {/* Add Link to the game details page */}
-              <Card className="bg-gray-800 text-white">
-                <CardHeader>
-                  <CardTitle className="text-xl">{game.name}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <img src={game.provider.thumbnail} alt={game.name} className="mb-2 rounded" />
-                  <p className="text-sm">Provider: {game.provider.name}</p>
-                  <p className="text-sm">Category: {game.category.name}</p>
-                  <p className="text-sm">RTP: {game.attributes.rtp || 'N/A'}%</p>
-                </CardContent>
-              </Card>
-            </Link>
-          ))
-        ) : (
-          <div>No games match the selected filters.</div>
-        )}
       </div>
     </div>
   );
