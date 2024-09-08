@@ -43,7 +43,6 @@ const NavMenu: React.FC = () => {
               <Link to="/dashboard" className={linkStyle}>Dashboard</Link>
               <Link to="/categories" className={linkStyle}>Categories</Link>
               <Link to="/Gamelist" className={linkStyle}>Full Game List</Link>
-              <Link to="/BonusCalculator" className={linkStyle}>Bonus Calculator</Link>
               <Link to="/potdatavisualization" className={linkStyle}>Pot Data Visualization</Link>
               
               {/* Add link for calculator */}
@@ -109,30 +108,10 @@ const NavMenu: React.FC = () => {
               <Link to="/Gamelist" className={linkStyle} onClick={toggleMobileMenu}>Full Game List</Link>
               <Link to="/BonusCalculator" className={linkStyle} onClick={toggleMobileMenu}>Bonus Calculator</Link>
               <Link to="/potdatavisualization" className={linkStyle} onClick={toggleMobileMenu}>Pot Data Visualization</Link>
-
-              <button
-                onClick={toggleCalculator}
-                className={buttonStyle}
-              >
-                Bonus Calculator
-              </button>
             </div>
           </div>
         )}
       </nav>
-
-      {/* Draggable Calculator Popup */}
-      {isCalculatorVisible && (
-        <Draggable>
-          <div className="absolute top-0 left-0 z-50 bg-gray-800 p-4 rounded-lg shadow-lg" style={{ width: '400px', height: '800px' }}>
-            <div className="flex justify-between mb-4">
-              <h2 className="text-white text-lg">Bonus Calculator</h2>
-              <button onClick={toggleCalculator} className="text-white">X</button>
-            </div>
-            <BonusCalculator />
-          </div>
-        </Draggable>
-      )}
     </>
   );
 };
