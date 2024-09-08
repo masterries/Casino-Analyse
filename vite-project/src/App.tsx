@@ -7,6 +7,7 @@ import ProviderDetails from './components/ProviderDetails';
 import GameDetails from './components/GameDetails';
 import GameList from './components/GameList';
 import BonusCalculator from './components/BonusCalculator';
+import PotDataVisualization from './components/PotDataVisualization';
 
 interface Game {
   slug: string;
@@ -94,6 +95,7 @@ const App: React.FC = () => {
               <Route path="/game/:slug" element={<GameDetails />} />
               <Route path ="gamelist" element={<GameList />} />
               <Route path ="bonuscalculator" element={<BonusCalculator />} />
+              <Route path ="potdatavisualization" element={<PotDataVisualization />} />
               {/* Add more routes for categories and other pages */}
             </Routes>
           </main>

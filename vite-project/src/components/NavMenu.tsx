@@ -34,6 +34,7 @@ const NavMenu: React.FC = () => {
               <Link to="/categories" className={linkStyle}>Categories</Link>
               <Link to="/Gamelist" className={linkStyle}>Full Game List</Link>
               <Link to="/BonusCalculator" className={linkStyle}>Bonus Calculator</Link>
+              <Link to="/potdatavisualization" className={linkStyle}>Pot Data Visualization</Link>
               <div 
                 className="relative group"
                 onMouseEnter={() => handleMouseEnter('categories')}
